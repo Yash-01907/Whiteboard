@@ -1,0 +1,19 @@
+# Node modules for any folder
+node_modules/
+
+# Frontend-specific (e.g., React or Next.js)
+frontend/build/
+frontend/.next/
+frontend/dist/
+
+# Backend-specific (e.g., Node.js, Express)
+backend/node_modules/
+backend/logs/
+backend/.env
+
+# OS and editor files
+.DS_Store
+*.log
+*.env
+.vscode/
+.idea/
