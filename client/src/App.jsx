@@ -1,12 +1,10 @@
 import React from 'react'
 import {Outlet} from 'react-router'
+import AuthLayout from './components/AuthLayout'
 
 function App() {
   return (
-    <div>
-      <h1>App</h1>
-      <Outlet />
-    </div>
+   <></>
   )
 }
 
