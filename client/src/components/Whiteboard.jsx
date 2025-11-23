@@ -61,7 +61,7 @@ const Whiteboard = () => {
               points={line.points}
               stroke="#df4b26"
               strokeWidth={5}
-              // tension={0.5}
+              tension={0}
               lineCap="round"
               lineJoin="round"
               globalCompositeOperation={
