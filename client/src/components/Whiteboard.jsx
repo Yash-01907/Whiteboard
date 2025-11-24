@@ -1,48 +1,95 @@
-import React, { useState, useRef } from 'react';
-import { Stage, Layer, Line, Text } from 'react-konva';
+import React, { useState, useRef } from "react";
+import { Stage, Layer, Line, Text } from "react-konva";
+import RectComponent from "../shapes/RectComponent";
+import EllipseComponent from "../shapes/EllipseComponent.jsx";
+import LineComponent from "../shapes/LineComponent.jsx";
+import { v4 as uuidv4 } from "uuid";
+import { updateStrategies } from "../utils/shapeLogic.js";
 
-const Whiteboard = () => {
-  const [tool, setTool] = useState('pen');
-  const [lines, setLines] = useState([]);
+const Whiteboard = ({ tool }) => {
+  const [shapes, setShapes] = useState([]);
+  const [newShape, setNewShape] = useState(null);
   const isDrawing = useRef(false);
+
+  // const handleMouseDown = (e) => {
+  //   isDrawing.current = true;
+  //   const pos = e.target.getStage().getPointerPosition();
+
+  //   // Standard default props
+  //   const commonProps = {
+  //     id: uuidv4(),
+  //     tool,
+  //     stroke: "#fff"
+  //   };
+
+  //   // SPECIAL LOGIC FOR LINE
+  //   if (tool === 'line') {
+  //     setNewShape({
+  //       ...commonProps,
+  //       x: 0, // Crucial: Line points are absolute, so shape position is 0
+  //       y: 0,
+  //       points: [pos.x, pos.y], // Start with the first point
+  //     });
+  //   }
+
+  //   else {
+  //     setNewShape({
+  //       ...commonProps,
+  //       x: pos.x,
+  //       y: pos.y,
+  //       startX: pos.x, // Needed for your Ellipse math
+  //       startY: pos.y,
+  //     });
+  //   }
+  // };
 
   const handleMouseDown = (e) => {
     isDrawing.current = true;
+
     const pos = e.target.getStage().getPointerPosition();
-    setLines([...lines, { tool, points: [pos.x, pos.y] }]);
+
+    setNewShape({
+      tool,
+      id: uuidv4(),
+      x: pos.x,
+      y: pos.y,
+      startX: pos.x,
+      startY: pos.y,
+    });
   };
 
   const handleMouseMove = (e) => {
     // no drawing - skipping
-    if (!isDrawing.current) {
+    if (!isDrawing.current || !newShape) {
       return;
     }
     const stage = e.target.getStage();
     const point = stage.getPointerPosition();
-    let lastLine = lines[lines.length - 1];
-    
-    // add point
-    lastLine.points = lastLine.points.concat([point.x, point.y]);
 
-    // replace last
-    lines.splice(lines.length - 1, 1, lastLine);
-    setLines(lines.concat());
+    const updatedStrategy = updateStrategies[tool];
+    const startPos = { x: newShape.startX, y: newShape.startY };
+    const currentPos = { x: point.x, y: point.y };
+    const newAttr = updatedStrategy(startPos, currentPos, newShape?.points);
+    setNewShape((prev) => ({ ...prev, ...newAttr }));
   };
 
   const handleMouseUp = () => {
     isDrawing.current = false;
+    setShapes((prev) => [...prev, newShape]);
+    setNewShape(null);
+  };
+
+  const shapeRegistry = {
+    rect: (props) => <RectComponent {...props} />,
+    ellipse: (props) => <EllipseComponent {...props} />,
+    line: (props) => <LineComponent {...props} />,
   };
 
   return (
     <div>
-      {/* Simple Toolbar */}
-      <div style={{ marginBottom: '10px' }}>
-        <button onClick={() => setTool('pen')}>Pen</button>
-        <button onClick={() => setTool('eraser')}>Eraser</button>
-      </div>
-
       {/* The Canvas Area */}
       <Stage
+        className="bg-black"
         width={window.innerWidth}
         height={window.innerHeight}
         onMouseDown={handleMouseDown}
@@ -51,25 +98,10 @@ const Whiteboard = () => {
         onTouchStart={handleMouseDown} // Logic for mobile
         onTouchMove={handleMouseMove}
         onTouchEnd={handleMouseUp}
-        style={{ border: '2px solid #333', backgroundColor: '#f0f0f0' }}
+        // style={{ border: "2px solid #333", backgroundColor: "#f0f0f0" }}
       >
-        <Layer>
-          <Text text="Click and drag to draw" x={10} y={10} />
-          {lines.map((line, i) => (
-            <Line
-              key={i}
-              points={line.points}
-              stroke="#df4b26"
-              strokeWidth={5}
-              tension={0}
-              lineCap="round"
-              lineJoin="round"
-              globalCompositeOperation={
-                line.tool === 'eraser' ? 'destination-out' : 'source-over'
-              }
-            />
-          ))}
-        </Layer>
+        <Layer>{shapes.map((shape) => shapeRegistry[shape.tool](shape))}</Layer>
+        <Layer>{newShape && shapeRegistry[tool](newShape)}</Layer>
       </Stage>
     </div>
   );

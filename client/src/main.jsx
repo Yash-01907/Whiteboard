@@ -1,18 +1,15 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 import "./index.css";
-import App from "./App.jsx";
-import  Whiteboard  from "./components/Whiteboard";
-import  About  from "./components/About";
 import  AuthLayout  from "./components/AuthLayout";
 import  Login  from "./components/Login";
 import  Register  from "./components/Register";
+import WhiteboardWrapper from "./pages/WhiteboardWrapper.jsx";
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <Routes>
-      <Route index element={<Whiteboard />} />
+      <Route index element={<WhiteboardWrapper />} />
       
       <Route element={<AuthLayout />}>
         <Route path="login" element={<Login />} />
@@ -20,5 +17,4 @@ createRoot(document.getElementById("root")).render(
       </Route>
     </Routes>
   </BrowserRouter>
-  // <App />
 );
