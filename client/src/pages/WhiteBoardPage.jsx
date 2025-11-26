@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Toolbar } from "../components/Toolbar";
 import Whiteboard from "../components/Whiteboard";
 
-const WhiteboardWrapper = () => {
+const WhiteBoardPage = () => {
   const [tool, setTool] = useState("rect");
   return (
     <div className="relative w-screen h-screen overflow-hidden">
@@ -22,4 +22,4 @@ const WhiteboardWrapper = () => {
   );
 };
 
-export default WhiteboardWrapper;
+export default WhiteBoardPage;
