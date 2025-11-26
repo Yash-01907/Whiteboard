@@ -2,9 +2,13 @@ import React from "react";
 import Input from "../components/Input";
 import { useForm, FormProvider } from "react-hook-form";
 import { Link } from "react-router";
+import { GoogleLogin } from "@react-oauth/google";
+import GoogleLoginButton from "../components/GoogleLoginButton.jsx";
 
 function Login() {
-  const methods = useForm();
+  const methods = useForm({
+    defaultValues: { "username or email": "", password: "" },
+  });
 
   const onSubmit = (data) => {
     console.log(data);
@@ -25,10 +29,17 @@ function Login() {
           className="flex flex-col gap-4"
         >
           <Input
-            name="username"
-            placeholder="Enter your username"
-            label="Username"
-            rules={{ required: "Username is required" }}
+            name="username or email"
+            placeholder="Enter your username or email"
+            label="Username or Email"
+            rules={{ required: "Username or email is required" }}
+          />
+
+          <Input
+            name="password"
+            placeholder="Enter your password"
+            label="Password"
+            rules={{ required: "Password is required" }}
           />
 
           {/* Assuming there might be a password field later, but for now just username as per existing code */}
@@ -41,6 +52,8 @@ function Login() {
           </button>
         </form>
       </FormProvider>
+
+      <GoogleLoginButton />
 
       <div className="text-center text-sm text-gray-400">
         Don't have an account?{" "}

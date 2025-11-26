@@ -1,20 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import User from "../models/user.model.js";
-
-const generateRefreshAndAccessToken = async (user) => {
-  try {
-    const refreshToken = await user.generateRefreshToken();
-    const accessToken = await user.generateAccessToken();
-
-    user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
-
-    return { refreshToken, accessToken };
-  } catch (error) {
-    console.error("Token generation failed:", error);
-    throw error;
-  }
-};
+import { generateRefreshAndAccessToken } from "../utils/generateRefreshAndAccessToken.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
