@@ -33,3 +33,4 @@ const whiteboardSchema = new Schema(
 );
 
 const Whiteboard = model("Whiteboard", whiteboardSchema);
+export default Whiteboard;
