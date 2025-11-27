@@ -24,9 +24,11 @@ app.use(cors(
   }
 ));
 import userRoutes from "./routes/user.route.js";
-import authRoutes from "./routes/auth.route.js"
+import authRoutes from "./routes/auth.route.js";
+import whiteboardRoutes from "./routes/whiteboard.route.js";
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/whiteboards", whiteboardRoutes);
 
 
 app.listen(process.env.PORT, () => {
