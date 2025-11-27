@@ -85,4 +85,14 @@ const deleteUser = asyncHandler(async (req, res) => {
   });
 });
 
-export { registerUser, loginUser, deleteUser };
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = req.user;
+  res.status(200).json({
+    success: true,
+    message: "User fetched successfully",
+    user,
+  });
+});
+
+export { registerUser, loginUser, deleteUser, getCurrentUser };
