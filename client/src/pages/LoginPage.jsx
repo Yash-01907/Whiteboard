@@ -4,14 +4,33 @@ import { useForm, FormProvider } from "react-hook-form";
 import { Link } from "react-router";
 import { GoogleLogin } from "@react-oauth/google";
 import GoogleLoginButton from "../components/GoogleLoginButton.jsx";
+import { useState } from "react";
 
 function Login() {
   const methods = useForm({
     defaultValues: { "username or email": "", password: "" },
   });
-
-  const onSubmit = (data) => {
-    console.log(data);
+  const [error, setError] = useState(null);
+  const onSubmit = async (data) => {
+    try {
+      const userInfo = await fetch("http://localhost:8000/api/v1/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          usernameOrEmail: data["username or email"],
+          password: data.password,
+        }),
+        credentials: "include",
+      });
+      const responseData = await userInfo.json();
+      if (responseData.success) {
+        setError(null);
+      } else {
+        setError(responseData.message);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -26,7 +45,7 @@ function Login() {
       <FormProvider {...methods}>
         <form
           onSubmit={methods.handleSubmit(onSubmit)}
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-4 mb-10"
         >
           <Input
             name="username or email"
@@ -50,6 +69,18 @@ function Login() {
           >
             Sign In
           </button>
+          {error && (
+            <div className="relative bg-red-100 text-red-700 text-sm font-medium mt-2 p-3 rounded-md w-full">
+              {error}
+
+              <button
+                onClick={() => setError(null)}
+                className="absolute right-2 top-1 text-red-700 font-bold hover:text-red-900 text-2xl cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+          )}
         </form>
       </FormProvider>
 

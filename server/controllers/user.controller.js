@@ -38,15 +38,15 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password, username } = req.body;
+  const { usernameOrEmail,password } = req.body;
 
-  if ((!email && !username) || !password) {
+  if (!usernameOrEmail || !password) {
     return res
       .status(400)
       .json({ success: false, message: "All fields are required" });
   }
 
-  const user = await User.findOne({ $or: [{ email }, { username }] });
+  const user = await User.findOne({ $or: [{ email:usernameOrEmail }, { username:usernameOrEmail }] });
 
   if (!user) {
     return res

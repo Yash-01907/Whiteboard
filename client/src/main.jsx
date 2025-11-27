@@ -7,6 +7,7 @@ import Register from "./components/Register";
 import WhiteboardWrapper from "./pages/WhiteBoardPage.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import conf from "./utils/conf";
+import RegisterPage from "./pages/RegisterPage.jsx";
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
@@ -16,7 +17,7 @@ createRoot(document.getElementById("root")).render(
 
         <Route element={<AuthLayout />}>
           <Route path="login" element={<LoginPage />} />
-          <Route path="register" element={<Register />} />
+          <Route path="register" element={<RegisterPage />} />
         </Route>
       </Routes>
     </GoogleOAuthProvider>
