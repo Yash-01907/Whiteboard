@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { createBoard, getMyBoards } from "../api/whiteboard";
 import { useAuth } from "../context/AuthContext"; // Assuming you have this
 

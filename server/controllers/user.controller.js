@@ -31,6 +31,9 @@ const registerUser = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Invalid user data" });
   }
 
+  const { accessToken } = await generateRefreshAndAccessToken(user);
+  res.cookie("accessToken", accessToken);
+
   res.status(201).json({
     success: true,
     message: "User registered successfully",
@@ -38,7 +41,7 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  const { usernameOrEmail,password } = req.body;
+  const { usernameOrEmail, password } = req.body;
 
   if (!usernameOrEmail || !password) {
     return res
@@ -46,7 +49,9 @@ const loginUser = asyncHandler(async (req, res) => {
       .json({ success: false, message: "All fields are required" });
   }
 
-  const user = await User.findOne({ $or: [{ email:usernameOrEmail }, { username:usernameOrEmail }] });
+  const user = await User.findOne({
+    $or: [{ email: usernameOrEmail }, { username: usernameOrEmail }],
+  });
 
   if (!user) {
     return res
@@ -63,12 +68,19 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   const { accessToken } = await generateRefreshAndAccessToken(user);
+
+  const loggedInUser = {
+    id: user._id,
+    username: user.username,
+    email: user.email,
+  };
   res.cookie("accessToken", accessToken);
   console.log(accessToken);
 
   res.status(200).json({
     success: true,
     message: "Login successful",
+    user: loggedInUser,
   });
 });
 
@@ -84,7 +96,6 @@ const deleteUser = asyncHandler(async (req, res) => {
     message: "User deleted successfully",
   });
 });
-
 
 const getCurrentUser = asyncHandler(async (req, res) => {
   const user = req.user;

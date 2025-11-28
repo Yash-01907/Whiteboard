@@ -8,10 +8,12 @@ import WhiteboardWrapper from "./pages/WhiteBoardPage.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import conf from "./utils/conf";
 import RegisterPage from "./pages/RegisterPage.jsx";
-
+import Dashboard from "./pages/Dashboard.jsx";
+import { AuthProvider } from "./context/AuthContext.jsx";
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <GoogleOAuthProvider clientId={conf.googleClientId}>
+      <AuthProvider>
       <Routes>
         <Route index element={<WhiteboardWrapper />} />
 
@@ -19,7 +21,9 @@ createRoot(document.getElementById("root")).render(
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
         </Route>
+        <Route path="dashboard" element={<Dashboard />} />
       </Routes>
+      </AuthProvider>
     </GoogleOAuthProvider>
   </BrowserRouter>
 );

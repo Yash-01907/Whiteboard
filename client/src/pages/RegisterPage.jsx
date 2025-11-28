@@ -3,8 +3,9 @@ import { useForm, FormProvider } from 'react-hook-form'
 import Input from '../components/Input'
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import { useState } from 'react';
-
+import { useNavigate } from 'react-router';
 function RegisterPage() {
+    const navigate = useNavigate();
     const methods = useForm({
         defaultValues: { username: "", password: "", email: "" },
     });
@@ -20,6 +21,7 @@ function RegisterPage() {
             });
             const responseData = await userInfo.json();
             if (responseData.success) {
+                navigate("/dashboard");
                 setError(null);
             } else {
                 setError(responseData.message);

@@ -27,6 +27,12 @@ export const googleAuthHandler = asyncHandler(async (req, res) => {
     });
   }
   const { accessToken } = await generateRefreshAndAccessToken(user);
+
+  const loggedInUser = {
+    id: user._id,
+    username: user.username,
+    email: user.email,
+  };
   res.cookie("accessToken", accessToken);
   console.log({ token: accessToken, email, name, sub });
   res
@@ -34,6 +40,6 @@ export const googleAuthHandler = asyncHandler(async (req, res) => {
     .json({
       success: true,
       message: "User logged in successfully",
-      accessToken,
+      user: loggedInUser,
     });
 });

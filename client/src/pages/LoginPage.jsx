@@ -5,11 +5,14 @@ import { Link } from "react-router";
 import { GoogleLogin } from "@react-oauth/google";
 import GoogleLoginButton from "../components/GoogleLoginButton.jsx";
 import { useState } from "react";
-
+import { useNavigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
 function Login() {
+  const navigate = useNavigate();
   const methods = useForm({
     defaultValues: { "username or email": "", password: "" },
   });
+  const { login } = useAuth();
   const [error, setError] = useState(null);
   const onSubmit = async (data) => {
     try {
@@ -23,8 +26,13 @@ function Login() {
         credentials: "include",
       });
       const responseData = await userInfo.json();
+      console.log(responseData)
       if (responseData.success) {
+        console.log("Login successful");
         setError(null);
+        console.log(responseData.user)
+        login(responseData.user);
+        navigate("/dashboard");
       } else {
         setError(responseData.message);
       }
