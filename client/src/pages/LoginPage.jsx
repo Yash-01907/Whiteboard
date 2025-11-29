@@ -25,12 +25,14 @@ function Login() {
       //   }),
       //   credentials: "include",
       // });
-
+      // const responseData = await userInfo.json();
+      
       const userInfo=await api.post("/users/login", {
-        usernameOrEmail: data["username or email"],
-        password: data.password,
-      });
-      const responseData = userInfo.data;
+          usernameOrEmail: data["username or email"],
+          password: data.password,
+        });
+        const responseData = userInfo.data;
+        console.log(responseData)
       if (responseData.success) {
         console.log("Login successful");
         setError(null);
@@ -38,10 +40,10 @@ function Login() {
         login(responseData.user);
         navigate("/dashboard");
       } else {
-        setError(responseData.message);
       }
     } catch (error) {
-      console.error(error);
+    const message = error.response?.data?.message||"Failed Login"
+          setError(message);
     }
   };
 

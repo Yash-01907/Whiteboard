@@ -1,75 +1,96 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
 import { createBoard, getMyBoards } from "../api/whiteboard";
-import { useAuth } from "../context/AuthContext"; // Assuming you have this
 
 const Dashboard = () => {
+  const { user } = useAuth(); 
+  const navigate = useNavigate();
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const { user } = useAuth(); 
 
+  // 1. Fetch data on mount
   useEffect(() => {
     const fetchBoards = async () => {
       try {
         const data = await getMyBoards();
         setBoards(data.whiteboards);
       } catch (error) {
-        console.error("Failed to load boards", error);
+        console.error("Failed to fetch boards:", error);
       } finally {
         setLoading(false);
       }
     };
+
     fetchBoards();
   }, []);
 
-  // 2. Handle Create New
-  const handleCreate = async () => {
+  // 2. Handle "Create New Board"
+  const handleCreateNew = async () => {
     try {
-      const data = await createBoard("Untitled Board");
-      // Redirect to the new board immediately
-      // navigate(`/board/${data.whiteboard._id}`);
-      console.log("New Board Creaeted")
+      // Create board on backend
+      const response = await createBoard("Untitled Board");
+      
+      // Redirect to the new dynamic route
+      navigate(`/board/${response.whiteboard._id}`);
     } catch (error) {
-      console.error("Failed to create board", error);
+      alert("Failed to create board");
     }
   };
 
-  if (loading) return <div>Loading your workspace...</div>;
+  if (loading) return <div className="p-10 text-center">Loading your workspace...</div>;
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">My Whiteboards</h1>
-        <button 
-          onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+    <div className="min-h-screen bg-gray-50 p-8">
+      {/* Header */}
+      <div className="max-w-6xl mx-auto flex justify-between items-center mb-10">
+        <h1 className="text-3xl font-bold text-gray-800">
+          Welcome back, {user?.username} 👋
+        </h1>
+        <button
+          onClick={handleCreateNew}
+          className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition font-medium"
         >
           + Create New Board
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Grid of Boards */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Empty State */}
+        {boards.length === 0 && (
+          <div className="col-span-3 text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
+            <p className="text-gray-500 mb-4">You haven't created any whiteboards yet.</p>
+            <button onClick={handleCreateNew} className="text-blue-600 font-medium hover:underline">
+              Start your first project
+            </button>
+          </div>
+        )}
+
+        {/* Board Cards */}
         {boards.map((board) => (
-          <div 
-            key={board._id} 
+          <div
+            key={board._id}
             onClick={() => navigate(`/board/${board._id}`)}
-            className="border rounded-lg p-6 cursor-pointer hover:shadow-lg transition bg-white"
+            className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 group"
           >
-            <h3 className="font-semibold text-lg">{board.title}</h3>
-            <p className="text-gray-500 text-sm mt-2">
-              {board.owner === user?._id ? "Owner" : "Collaborator"}
-            </p>
-            <p className="text-gray-400 text-xs mt-4">
-              Last updated: {new Date(board.updatedAt).toLocaleDateString()}
-            </p>
+            <div className="h-32 bg-gray-100 rounded-lg mb-4 flex items-center justify-center text-gray-300">
+                {/* Placeholder for thumbnail later */}
+                <span>Preview</span>
+            </div>
+            
+            <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-600 transition">
+              {board.title}
+            </h3>
+            
+            <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
+               <span>{board.owner === user?._id ? "Owner" : "Collaborator"}</span>
+               <span>{new Date(board.updatedAt).toLocaleDateString()}</span>
+            </div>
           </div>
         ))}
       </div>
-      
-      {boards.length === 0 && (
-        <p className="text-gray-500 text-center mt-10">No boards found. Create one to get started!</p>
-      )}
     </div>
   );
 };
