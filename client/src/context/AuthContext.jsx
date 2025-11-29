@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import {api} from "../api/axios";
 import axios from "axios";
 import { useNavigate } from "react-router";
 
@@ -16,8 +17,8 @@ const navigate = useNavigate();
       try {
         // We ask the backend: "Who is the current user?"
         // Make sure this URL matches your backend route!
-        const res = await axios.get(
-          "http://localhost:8000/api/v1/users/current-user",
+        const res = await api.get(
+          "/users/current-user",
           {
             withCredentials: true, // IMPORTANT: Sends the cookie
           }

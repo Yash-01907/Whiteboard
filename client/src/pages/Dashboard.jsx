@@ -28,7 +28,8 @@ const Dashboard = () => {
     try {
       const data = await createBoard("Untitled Board");
       // Redirect to the new board immediately
-      navigate(`/board/${data.whiteboard._id}`);
+      // navigate(`/board/${data.whiteboard._id}`);
+      console.log("New Board Creaeted")
     } catch (error) {
       console.error("Failed to create board", error);
     }

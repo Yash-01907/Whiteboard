@@ -1,12 +1,12 @@
-import React from "react";
 import Input from "../components/Input";
 import { useForm, FormProvider } from "react-hook-form";
 import { Link } from "react-router";
-import { GoogleLogin } from "@react-oauth/google";
 import GoogleLoginButton from "../components/GoogleLoginButton.jsx";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
+import { api } from "../api/axios.js";
+
 function Login() {
   const navigate = useNavigate();
   const methods = useForm({
@@ -16,17 +16,21 @@ function Login() {
   const [error, setError] = useState(null);
   const onSubmit = async (data) => {
     try {
-      const userInfo = await fetch("http://localhost:8000/api/v1/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          usernameOrEmail: data["username or email"],
-          password: data.password,
-        }),
-        credentials: "include",
+      // const userInfo = await fetch("http://localhost:8000/api/v1/users/login", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({
+      //     usernameOrEmail: data["username or email"],
+      //     password: data.password,
+      //   }),
+      //   credentials: "include",
+      // });
+
+      const userInfo=await api.post("/users/login", {
+        usernameOrEmail: data["username or email"],
+        password: data.password,
       });
-      const responseData = await userInfo.json();
-      console.log(responseData)
+      const responseData = userInfo.data;
       if (responseData.success) {
         console.log("Login successful");
         setError(null);
