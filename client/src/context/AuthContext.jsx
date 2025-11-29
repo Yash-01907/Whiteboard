@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import {api} from "../api/axios";
 import axios from "axios";
 import { useNavigate } from "react-router";
+import { logoutUserApi } from "../api/auth";
 
 // 1. Create the Context (The "Signal")
 const AuthContext = createContext();
@@ -45,8 +46,13 @@ const navigate = useNavigate();
   };
 
   // Helper function to clear user (e.g., Logout)
-  const logout = () => {
-    setUser(null);
+  const logout = async () => {
+    try {
+        await logoutUserApi(); // Backend clears cookie
+    } catch (error) {
+        console.error("Logout failed", error);
+    }
+   setUser(null);
     // You can also call a backend logout endpoint here if you want
   };
 

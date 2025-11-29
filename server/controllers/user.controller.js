@@ -113,6 +113,7 @@ const registerUser = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     message: "User registered successfully",
+    user
   });
 });
 
@@ -174,12 +175,21 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
+const logoutUser=asyncHandler(async(req,res)=>{
+    res.clearCookie("accessToken",cookieOptions);
+    res.clearCookie("refreshToken",cookieOptions);
+    res.status(200).json({
+        success:true,
+        message:"User logged out successfully"
+    })
+})
+
 const deleteUser = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
   await User.findByIdAndDelete(userId);
 
-  res.clearCookie("accessToken");
+  res.clearCookie("accessToken",cookieOptions);
 
   res.status(200).json({
     success: true,
@@ -202,4 +212,5 @@ export {
   deleteUser,
   getCurrentUser,
   refreshAccessToken,
+  logoutUser
 };

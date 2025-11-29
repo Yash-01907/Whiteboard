@@ -6,8 +6,7 @@ import LineComponent from "../shapes/LineComponent.jsx";
 import { v4 as uuidv4 } from "uuid";
 import { updateStrategies } from "../utils/shapeLogic.js";
 
-const Whiteboard = ({ tool }) => {
-  const [shapes, setShapes] = useState([]);
+const Whiteboard = ({ tool, shapes, setShapes }) => {
   const [newShape, setNewShape] = useState(null);
   const isDrawing = useRef(false);
 

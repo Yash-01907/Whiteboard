@@ -1,6 +1,6 @@
 import Input from "../components/Input";
 import { useForm, FormProvider } from "react-hook-form";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import GoogleLoginButton from "../components/GoogleLoginButton.jsx";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -9,11 +9,15 @@ import { api } from "../api/axios.js";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const methods = useForm({
     defaultValues: { "username or email": "", password: "" },
   });
   const { login } = useAuth();
   const [error, setError] = useState(null);
+  const from = location.state?.from?.pathname || "/dashboard";
+  console.log(location)
+  console.log(from)
   const onSubmit = async (data) => {
     try {
       // const userInfo = await fetch("http://localhost:8000/api/v1/users/login", {
@@ -26,24 +30,24 @@ function Login() {
       //   credentials: "include",
       // });
       // const responseData = await userInfo.json();
-      
-      const userInfo=await api.post("/users/login", {
-          usernameOrEmail: data["username or email"],
-          password: data.password,
-        });
-        const responseData = userInfo.data;
-        console.log(responseData)
+
+      const userInfo = await api.post("/users/login", {
+        usernameOrEmail: data["username or email"],
+        password: data.password,
+      });
+      const responseData = userInfo.data;
+      console.log(responseData);
       if (responseData.success) {
         console.log("Login successful");
         setError(null);
-        console.log(responseData.user)
+        console.log(responseData.user);
         login(responseData.user);
-        navigate("/dashboard");
+        navigate(from, { replace: true });
       } else {
       }
     } catch (error) {
-    const message = error.response?.data?.message||"Failed Login"
-          setError(message);
+      const message = error.response?.data?.message || "Failed Login";
+      setError(message);
     }
   };
 
