@@ -1,8 +1,12 @@
 import React from "react";
 import { useGoogleLogin } from "@react-oauth/google";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router";
 
 const GoogleLoginButton = () => {
-  const login = useGoogleLogin({
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const loginToApp = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       console.log(tokenResponse);
       // tokenResponse contains "access_token", NOT "credential" (ID Token)
@@ -10,14 +14,18 @@ const GoogleLoginButton = () => {
       // Send the access token to backend
 
       try {
-        const userInfo = await fetch("http://localhost:8000/api/v1/auth/google", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: tokenResponse.access_token }),
-          credentials: "include",
-        });
+        const userInfo = await fetch(
+          "http://localhost:8000/api/v1/auth/google",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: tokenResponse.access_token }),
+            credentials: "include",
+          }
+        );
         const data = await userInfo.json();
-        console.log(data);
+        login(data.user);
+        navigate("/dashboard");
       } catch (error) {
         console.error(error);
       }
@@ -28,7 +36,7 @@ const GoogleLoginButton = () => {
   return (
     // You can style this button however you want!
     <button
-      onClick={() => login()}
+      onClick={() => loginToApp()}
       className="bg-[#1A1A1A] w-full rounded-xl py-3 px-6 text-white font-semibold flex items-center justify-center cursor-pointer gap-2"
     >
       <img
