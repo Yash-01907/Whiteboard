@@ -7,7 +7,7 @@ const RectComponent = ({
   width,
   height,
   rotation=0,
-  stroke="#fff",
+  stroke="black",
   fill="",
 }) => {
   return (
