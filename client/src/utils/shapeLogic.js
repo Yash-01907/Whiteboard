@@ -27,9 +27,16 @@ export const updateStrategies = {
   },
 
   arrow: (startPos, currentPos, existingPoints) => {
-    const points = existingPoints || [];
-    return {
-      points: [...points, currentPos.x, currentPos.y],
-    };
+    const newPoints = [...existingPoints]; // Copy it first
+    newPoints[2] = currentPos.x;
+    newPoints[3] = currentPos.y;
+    return { points: newPoints };
+  },
+
+  straightLine: (startPos, currentPos, existingPoints) => {
+    const newPoints = [...existingPoints]; // Copy it first
+    newPoints[2] = currentPos.x;
+    newPoints[3] = currentPos.y;
+    return { points: newPoints };
   },
 };

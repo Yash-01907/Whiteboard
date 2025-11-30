@@ -6,7 +6,8 @@ import {
   ArrowRight, 
   Type, 
   Eraser, 
-  MousePointer2 
+  MousePointer2,
+  Pencil 
 } from "lucide-react";
 
 export const Toolbar = ({ activeTool, onToolChange }) => {
@@ -15,10 +16,11 @@ export const Toolbar = ({ activeTool, onToolChange }) => {
     { id: "select", icon: MousePointer2, label: "Select" },
     { id: "rect", icon: Square, label: "Rectangle" },
     { id: "ellipse", icon: Circle, label: "Ellipse" },
-    { id: "line", icon: Minus, label: "Line" },
+    { id: "straightLine", icon: Minus, label: "Straight Line" },   // NEW
+    { id: "line", icon: Pencil, label: "Draw" },
     { id: "arrow", icon: ArrowRight, label: "Arrow" }, // NEW
     { id: "text", icon: Type, label: "Text" },         // NEW
-    { id: "eraser", icon: Eraser, label: "Eraser" },   // NEW
+    { id: "eraser", icon: Eraser, label: "Eraser" },
   ];
 
   return (

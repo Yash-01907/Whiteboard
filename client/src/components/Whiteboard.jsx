@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef,useEffect } from "react";
 import { Stage, Layer, Arrow, Text } from "react-konva"; // Import Arrow and Text
 import { v4 as uuidv4 } from "uuid";
 
@@ -10,14 +10,7 @@ import LineComponent from "../shapes/LineComponent";
 import { updateStrategies } from "../utils/shapeLogic.js";
 import TextComponent from "../shapes/TextComponent.jsx";
 import ArrowComponent from "../shapes/ArrowComponent.jsx";
-function downloadURI(uri, name) {
-  var link = document.createElement('a');
-  link.download = name;
-  link.href = uri;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
+
 
 const Whiteboard = ({
   tool,
@@ -30,10 +23,16 @@ const Whiteboard = ({
   const isDrawing = useRef(false);
   const stageRef = useRef(null);
 
+  const [editingText, setEditingText] = useState(null);
+  const textareaRef = useRef(null);
   // --- 1. MOUSE DOWN (Start Drawing) ---
   const handleMouseDown = (e) => {
     // If we are in "Select" or "Eraser" mode, do not start drawing a new shape
+    if (editingText) return;
     if (tool === "select" || tool === "eraser") return;
+
+    const clickedOnEmpty = e.target === e.target.getStage();
+    if (!clickedOnEmpty) return;
 
     isDrawing.current = true;
     const pos = e.target.getStage().getPointerPosition();
@@ -51,21 +50,28 @@ const Whiteboard = ({
       startX: pos.x,
       startY: pos.y,
     });
-
+    
     // Specific Init Logic for different tools
     if (tool === "text") {
       setNewShape(prev=>({
         ...prev,
         text: "Double click to edit", // Placeholder text
         fontSize: 20,
-        fill: currentColor, // Text uses 'fill' for color, not 'stroke'
+        fill: currentColor,
+        // Text uses 'fill' for color, not 'stroke'
       }));
-    } else if (tool === "line" || tool === "arrow") {
+    } else if (tool === "line") {
       setNewShape(prev=>({
         ...prev,
         fill: currentColor, // Arrow head color
       }));
-    } 
+    } else if(tool==="straightLine" || tool==="arrow"){
+      setNewShape(prev=>({
+        ...prev,
+        points: [pos.x, pos.y,pos.x,pos.y],
+        fill: currentColor,
+      }));
+    }
     console.log(newShape)
   };
 
@@ -77,11 +83,7 @@ const Whiteboard = ({
     const stage = e.target.getStage();
     const point = stage.getPointerPosition();
 
-    // Helper: Arrows behave exactly like Lines during creation
-    // We check if the tool is arrow, if so, use the 'line' strategy
-   
-
-    // Text doesn't resize on drag, so we skip it
+    
     if (tool !== "text" && updateStrategies[tool]) {
       const updatedAttr = updateStrategies[tool](
         { x: newShape.startX, y: newShape.startY }, // Start
@@ -111,6 +113,48 @@ const Whiteboard = ({
     }
   };
 
+  const handleTextDblClick = (e, shapeId, currentText) => {
+    const textNode = e.target;
+    // Get absolute position relative to the window
+    const stageBox = textNode.getStage().container().getBoundingClientRect();
+    const textPosition = textNode.getAbsolutePosition();
+    
+    // Calculate position for the textarea
+    const areaPosition = {
+        x: stageBox.left + textPosition.x,
+        y: stageBox.top + textPosition.y,
+    };
+
+    setEditingText({
+      id: shapeId,
+      text: currentText,
+      x: areaPosition.x,
+      y: areaPosition.y,
+      color: textNode.fill(),
+      fontSize: textNode.fontSize(),
+      width: textNode.width(),
+      height: textNode.height()
+    });
+  };
+
+  // B. Save Edit
+  const handleTextEditComplete = (e) => {
+    // Update the specific shape in the array
+    setShapes(shapes.map(shape => {
+        if (shape.id === editingText.id) {
+            return { ...shape, text: editingText.text };
+        }
+        return shape;
+    }));
+    setEditingText(null);
+  };
+
+  useEffect(() => {
+    if (editingText && textareaRef.current) {
+        textareaRef.current.focus();
+    }
+  }, [editingText]);
+
   // --- RENDER HELPER ---
   // We use a function instead of a simple object map so we can inject
   // common props (like onClick) to every shape easily.
@@ -136,7 +180,9 @@ const Whiteboard = ({
       case "arrow":
        return <ArrowComponent commonProps={commonProps} shape={shape} key={key}/>;
       case "text":
-        return <TextComponent commonProps={commonProps} shape={shape} key={key}/>;
+        return <TextComponent commonProps={commonProps} shape={shape} key={key} handleTextDblClick={handleTextDblClick} editingText={editingText}/>;
+      case "straightLine":
+        return <LineComponent {...shape} {...commonProps} key={key}/>;
       default:
         return null;
     }
@@ -161,6 +207,37 @@ const Whiteboard = ({
           {newShape && renderShape(newShape)}
         </Layer>
       </Stage>
+      {editingText && (
+        <textarea
+            ref={textareaRef}
+            value={editingText.text}
+            onChange={(e) => setEditingText({...editingText, text: e.target.value})}
+            onBlur={handleTextEditComplete}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                    handleTextEditComplete();
+                }
+            }}
+            style={{
+                position: 'fixed', // Use fixed to match window coordinates
+                top: editingText.y,
+                left: editingText.x,
+                fontSize: `${editingText.fontSize}px`,
+                lineHeight: `${editingText.fontSize}px`,
+                color: editingText.color,
+                border: 'none',
+                padding: '0px',
+                margin: '0px',
+                background: 'transparent',
+                outline: '1px dashed #3b82f6', // Helper outline
+                resize: 'none',
+                overflow: 'hidden',
+                whiteSpace: 'pre', // Keep formatting
+                minWidth: '100px', // Fallback width
+                zIndex: 9999, // Ensure it's on top
+            }}
+        />
+      )}
     </div>
   );
 };

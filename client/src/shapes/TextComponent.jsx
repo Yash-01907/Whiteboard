@@ -3,18 +3,34 @@ import { Text } from "react-konva";
 function TextComponent({
     commonProps,
     shape,
-    key
+    key,
+    handleTextDblClick,
+    editingText
 }) {
   return (
+    // <Text
+    // key={key}
+    //   {...commonProps}
+    //   x={shape.x}
+    //   y={shape.y}
+    //   text={shape.text}
+    //   fontSize={shape.fontSize}
+    //   fill={shape.fill}
+    // />
+
     <Text
-    key={key}
-      {...commonProps}
-      x={shape.x}
-      y={shape.y}
-      text={shape.text}
-      fontSize={shape.fontSize}
-      fill={shape.fill}
-    />
+            {...commonProps}
+            x={shape.x}
+            y={shape.y}
+            text={shape.text}
+            fontSize={shape.fontSize}
+            fill={shape.fill}
+            // Add Double Click Listener
+            onDblClick={(e) => handleTextDblClick(e, shape.id, shape.text)}
+            onDblTap={(e) => handleTextDblClick(e, shape.id, shape.text)}
+            // Hide the text node while editing so it doesn't overlap
+            visible={editingText?.id !== shape.id} 
+          />
   );
 }
 
