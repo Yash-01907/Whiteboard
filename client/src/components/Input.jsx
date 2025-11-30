@@ -12,7 +12,7 @@ function Input({ rules, name, placeholder, label, classname = "", ...props }) {
   return (
     <div className="flex flex-col gap-2 w-full">
       {label && (
-        <label className="text-sm font-medium text-gray-300 ml-1">
+        <label className="text-sm font-medium text-[#1A1A1A] ml-1">
           {label}
         </label>
       )}

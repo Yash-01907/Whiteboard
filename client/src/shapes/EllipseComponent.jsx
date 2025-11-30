@@ -7,7 +7,7 @@ const EllipseComponent = ({
   radiusX,
   radiusY,
   rotation = 0,
-  stroke = "#fff",
+  stroke = "black",
   fill = "",
 }) => {
   return (

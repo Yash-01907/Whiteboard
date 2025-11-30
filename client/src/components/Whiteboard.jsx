@@ -88,7 +88,7 @@ const Whiteboard = ({ tool, shapes, setShapes }) => {
     <div>
       {/* The Canvas Area */}
       <Stage
-        className="bg-[#1A1A1A]"
+        className="bg-white"
         width={window.innerWidth}
         height={window.innerHeight}
         onMouseDown={handleMouseDown}

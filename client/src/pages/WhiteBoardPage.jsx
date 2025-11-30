@@ -8,9 +8,10 @@ import { getBoardById, saveBoard } from "../api/whiteboard"; // The API function
 const WhiteBoardPage = () => {
   const { id } = useParams(); // Get "65a..." from URL
   const navigate = useNavigate();
+  const isGuest = !id || id === "demo";
 
   // LIFTED STATE: The Page owns the data, not the component
-  const [shapes, setShapes] = useState([]); 
+  const [shapes, setShapes] = useState([]);
   const [tool, setTool] = useState("rect");
   const [loading, setLoading] = useState(true);
 
@@ -18,70 +19,83 @@ const WhiteBoardPage = () => {
   useEffect(() => {
     const fetchBoardData = async () => {
       try {
-        const response = await getBoardById(id);
-        setShapes(response.whiteboard.elements); // Load shapes from DB
+        if (isGuest) {
+          const localData = localStorage.getItem("guest_whiteboard");
+          if (localData) {
+            setShapes(JSON.parse(localData));
+          }
+        } else {
+          const response = await getBoardById(id);
+          setShapes(response.whiteboard.elements); // Load shapes from DB
+        }
       } catch (error) {
-        console.error("Failed to load board", error);
+        console.error("Failed to load board", error.toJSON());
         alert("Could not load board. You might not have permission.");
-        navigate("/dashboard");
+        // navigate("/dashboard");
       } finally {
         setLoading(false);
       }
     };
 
     fetchBoardData();
-  }, [id, navigate]);
+  }, [id, isGuest, navigate]);
 
   // 2. Save Function
   const handleSave = async () => {
+    if (isGuest) {
+      localStorage.setItem("guest_whiteboard", JSON.stringify(shapes));
+    } else {
       try {
-          await saveBoard(id, shapes);
-          console.log("Saved successfully");
+        await saveBoard(id, shapes);
       } catch (error) {
-          console.error("Save failed", error);
+        console.error("Save failed", error);
       }
+    }
+    console.log("Saved successfully");
   };
 
   // Optional: Auto-save every 5 seconds if changed
   // (You can implement a proper debounce later)
 
-  if (loading) return <div className="h-screen flex items-center justify-center">Loading Canvas...</div>;
+  if (loading)
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Loading Canvas...
+      </div>
+    );
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-gray-100">
-      
-      {/* HEADER / SAVE BUTTON */}
+      {/* HEADER */}
       <div className="absolute top-4 right-4 z-20 flex gap-2">
-          <button 
-            onClick={handleSave}
-            className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
-          >
-            Save Board
-          </button>
-          <button 
-            onClick={() => navigate("/dashboard")}
-            className="bg-gray-600 text-white px-4 py-2 rounded shadow hover:bg-gray-700"
-          >
-            Exit
-          </button>
+        {/* Show a clear indicator for Guests */}
+        {isGuest && (
+          <span className="bg-yellow-100 text-yellow-800 px-3 py-2 rounded border border-yellow-300">
+            Guest Mode (Local Only)
+          </span>
+        )}
+
+        <button
+          onClick={handleSave}
+          className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
+        >
+          {isGuest ? "Save Locally" : "Save Board"}
+        </button>
+
+        <button
+          onClick={() => navigate(isGuest ? "/login" : "/dashboard")}
+          className="bg-gray-600 text-white px-4 py-2 rounded shadow hover:bg-gray-700"
+        >
+          Exit
+        </button>
       </div>
 
-      {/* TOOLBAR */}
+      {/* Toolbar & Whiteboard stay exactly the same */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
-        <Toolbar 
-           activeTool={tool} 
-           onToolChange={setTool} 
-        />
+        <Toolbar activeTool={tool} onToolChange={setTool} />
       </div>
 
-      {/* THE CANVAS */}
-      {/* We pass shapes and setShapes DOWN to the component */}
-      <Whiteboard 
-          tool={tool} 
-          shapes={shapes}       // <--- Data from DB
-          setShapes={setShapes} // <--- Function to update state
-      />
-      
+      <Whiteboard tool={tool} shapes={shapes} setShapes={setShapes} />
     </div>
   );
 };

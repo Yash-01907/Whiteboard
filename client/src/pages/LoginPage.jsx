@@ -16,8 +16,8 @@ function Login() {
   const { login } = useAuth();
   const [error, setError] = useState(null);
   const from = location.state?.from?.pathname || "/dashboard";
-  console.log(location)
-  console.log(from)
+  console.log(location);
+  console.log(from);
   const onSubmit = async (data) => {
     try {
       // const userInfo = await fetch("http://localhost:8000/api/v1/users/login", {
@@ -54,8 +54,8 @@ function Login() {
   return (
     <div className="flex flex-col gap-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-        <p className="text-gray-400">
+        <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">Welcome Back</h1>
+        <p className="text-[#1A1A1A]">
           Enter your credentials to access your account
         </p>
       </div>
@@ -104,7 +104,7 @@ function Login() {
 
       <GoogleLoginButton />
 
-      <div className="text-center text-sm text-gray-400">
+      <div className="text-center text-sm text-[#1A1A1A]">
         Don't have an account?{" "}
         <Link
           to="/register"

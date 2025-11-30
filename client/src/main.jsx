@@ -15,23 +15,29 @@ createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <GoogleOAuthProvider clientId={conf.googleClientId}>
       <AuthProvider>
-      <Routes>
-        <Route path="board/:id" element={
-          <RequireAuth>
-            <WhiteboardPage />
-          </RequireAuth>
-        } />
-
-        <Route element={<AuthLayout />}>
-          <Route path="login" element={<LoginPage />} />
-          <Route path="register" element={<RegisterPage />} />
-        </Route>
-        <Route path="dashboard" element={
-          <RequireAuth>
-            <Dashboard />
-          </RequireAuth>
-        } />
-      </Routes>
+        <Routes>
+          <Route path="/board/demo" element={<WhiteboardPage />} />
+          <Route
+            path="board/:id"
+            element={
+              <RequireAuth>
+                <WhiteboardPage />
+              </RequireAuth>
+            }
+          />
+          <Route element={<AuthLayout />}>
+            <Route path="login" element={<LoginPage />} />
+            <Route path="register" element={<RegisterPage />} />
+          </Route>
+          <Route
+            path="dashboard"
+            element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
+        </Routes>
       </AuthProvider>
     </GoogleOAuthProvider>
   </BrowserRouter>
