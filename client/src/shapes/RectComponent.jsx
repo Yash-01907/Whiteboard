@@ -9,9 +9,15 @@ const RectComponent = ({
   rotation=0,
   stroke="black",
   fill="",
+  key,
+strokeWidth,
+onClick,
+draggable,
+
 }) => {
   return (
     <Rect
+    key={key}
       x={x}
       y={y}
       width={width}
@@ -19,6 +25,9 @@ const RectComponent = ({
       rotation={rotation}
       stroke={stroke}
       fill={fill}
+      strokeWidth={strokeWidth}
+      onClick={onClick}
+      draggable={draggable}
     />
   );
 };

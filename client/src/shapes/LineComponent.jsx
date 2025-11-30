@@ -1,7 +1,7 @@
 import React from "react";
 import { Line } from "react-konva";
 
-const LineComponent = ({ points, stroke = "black", strokeWidth = 2 }) => {
+const LineComponent = ({ points, stroke = "black", strokeWidth = 2,draggable,onClick }) => {
   return (
     <Line
       points={points} 
@@ -10,6 +10,8 @@ const LineComponent = ({ points, stroke = "black", strokeWidth = 2 }) => {
       tension={0.2}
       lineCap="round"
       lineJoin="round"
+      draggable={draggable}
+      onClick={onClick}
     />
   );
 };

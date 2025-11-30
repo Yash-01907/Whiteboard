@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Toolbar } from "../components/Toolbar";
-import Whiteboard from "../components/Whiteboard"; // Your Konva Wrapper
-import { getBoardById, saveBoard } from "../api/whiteboard"; // The API functions
+import Whiteboard from "../components/Whiteboard";
+import { getBoardById, saveBoard } from "../api/whiteboard";
+import PropertiesPanel from "../components/PropertiesPanel";
 // import _ from "lodash"; // Optional: for debounce (npm i lodash)
 
 const WhiteBoardPage = () => {
-  const { id } = useParams(); // Get "65a..." from URL
+  const { id } = useParams();
   const navigate = useNavigate();
   const isGuest = !id || id === "demo";
 
@@ -14,6 +15,9 @@ const WhiteBoardPage = () => {
   const [shapes, setShapes] = useState([]);
   const [tool, setTool] = useState("rect");
   const [loading, setLoading] = useState(true);
+  const [strokeColor, setStrokeColor] = useState("#000000");
+  const [strokeWidth, setStrokeWidth] = useState(3);
+  const [canvasColor, setCanvasColor] = useState("#ffffff");
 
   // 1. Load Board Data on Mount
   useEffect(() => {
@@ -65,7 +69,10 @@ const WhiteBoardPage = () => {
     );
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-gray-100">
+    <div
+      className="relative w-screen h-screen overflow-hidden transition-colors duration-500 ease-in-out"
+      style={{ backgroundColor: canvasColor }}
+    >
       {/* HEADER */}
       <div className="absolute top-4 right-4 z-20 flex gap-2">
         {/* Show a clear indicator for Guests */}
@@ -91,11 +98,27 @@ const WhiteBoardPage = () => {
       </div>
 
       {/* Toolbar & Whiteboard stay exactly the same */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+      <div className="absolute top-1/2 left-4 -translate-y-1/2 z-10">
         <Toolbar activeTool={tool} onToolChange={setTool} />
       </div>
-
-      <Whiteboard tool={tool} shapes={shapes} setShapes={setShapes} />
+      <div className="absolute top-1/2 right-4 -translate-y-1/2 z-10">
+        <PropertiesPanel
+          strokeColor={strokeColor}
+          setStrokeColor={setStrokeColor}
+          strokeWidth={strokeWidth}
+          setStrokeWidth={setStrokeWidth}
+          canvasColor={canvasColor}
+          setCanvasColor={setCanvasColor}
+          activeTool={tool}
+        />
+      </div>
+      <Whiteboard
+        tool={tool}
+        shapes={shapes}
+        setShapes={setShapes}
+        currentColor={strokeColor}
+        currentWidth={strokeWidth}
+      />
     </div>
   );
 };

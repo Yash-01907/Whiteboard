@@ -25,4 +25,11 @@ export const updateStrategies = {
       points: [...points, currentPos.x, currentPos.y],
     };
   },
+
+  arrow: (startPos, currentPos, existingPoints) => {
+    const points = existingPoints || [];
+    return {
+      points: [...points, currentPos.x, currentPos.y],
+    };
+  },
 };

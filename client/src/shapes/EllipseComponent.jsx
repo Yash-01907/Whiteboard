@@ -9,6 +9,9 @@ const EllipseComponent = ({
   rotation = 0,
   stroke = "black",
   fill = "",
+  strokeWidth,
+  draggable,
+  onClick,
 }) => {
   return (
     <Ellipse
@@ -19,7 +22,9 @@ const EllipseComponent = ({
       rotation={rotation}
       stroke={stroke}
       fill={fill}
-      draggable
+      strokeWidth={strokeWidth}
+      draggable={draggable}
+      onClick={onClick}
     />
   );
 };
