@@ -30,7 +30,7 @@ export const googleAuthHandler = asyncHandler(async (req, res) => {
   const { accessToken, refreshToken } = await generateRefreshAndAccessToken(user);
 
   const loggedInUser = {
-    id: user._id,
+    _id: user._id,
     username: user.username,
     email: user.email,
   };

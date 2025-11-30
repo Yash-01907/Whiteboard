@@ -161,7 +161,7 @@ const loginUser = asyncHandler(async (req, res) => {
   );
 
   const loggedInUser = {
-    id: user._id,
+    _id: user._id,
     username: user.username,
     email: user.email,
   };

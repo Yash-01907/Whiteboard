@@ -7,7 +7,7 @@ const AuthLayout = () => {
     <div className="flex justify-center items-center h-screen bg-gray-50 text-gray-900 relative overflow-hidden">
       
       {/* Optional Background Pattern for Polish */}
-      <div className="absolute inset-0 opacity-[0.4] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]"></div>
+      <div className="absolute inset-0 opacity-[0.4] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[16px_16px]"></div>
 
       <button
         type="button"

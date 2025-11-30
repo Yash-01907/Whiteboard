@@ -111,9 +111,9 @@ function RegisterPage() {
       
       {/* Divider */}
       <div className="relative flex py-1 items-center">
-        <div className="flex-grow border-t border-gray-200"></div>
-        <span className="flex-shrink mx-4 text-gray-400 text-xs uppercase">Or</span>
-        <div className="flex-grow border-t border-gray-200"></div>
+        <div className="grow border-t border-gray-200"></div>
+        <span className="shrink mx-4 text-gray-400 text-xs uppercase">Or</span>
+        <div className="grow border-t border-gray-200"></div>
       </div>
 
       <GoogleLoginButton />
