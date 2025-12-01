@@ -19,6 +19,7 @@ const WhiteBoardPage = () => {
   const [strokeColor, setStrokeColor] = useState("#000000");
   const [strokeWidth, setStrokeWidth] = useState(3);
   const [canvasColor, setCanvasColor] = useState("#ffffff");
+  const [liveShapes, setLiveShapes] = useState({});
 
   // 1. Load Board Data on Mount
   useEffect(() => {
@@ -52,23 +53,36 @@ const WhiteBoardPage = () => {
       socket.emit("join_room", id); // Tell server "I am on Board 123"
       console.log("Joined Room:", id);
 
-      // Listen for incoming shapes from other people
-      socket.on("receive_stroke", (incomingShape) => {
-        // Add their shape to my screen
-        setShapes((prev) => [...prev, incomingShape]);
+      socket.on("receive_stroke", (finalShape) => {
+        setShapes((prev) => [...prev, finalShape]);
+        
+        // Remove the "ghost" version since we have the real one now
+        setLiveShapes((prev) => {
+            const newLive = { ...prev };
+            delete newLive[finalShape.id];
+            return newLive;
+        });
+      });
+
+      socket.on("drawing_move", (tempShape) => {
+        setLiveShapes((prev) => ({
+            ...prev,
+            [tempShape.id]: tempShape // Update or Add based on ID
+        }));
       });
     }
 
     // Cleanup: Disconnect when I leave the page
     return () => {
       if (socket.connected) {
-        socket.off("receive_stroke"); // Stop listening
+        socket.off("receive_stroke"); 
+        socket.off("drawing_move"); 
         socket.disconnect();
       }
     };
   }, [id, isGuest]);
 
-  // 2. Save Function
+
   const handleSave = async () => {
     if (isGuest) {
       localStorage.setItem("guest_whiteboard", JSON.stringify(shapes));
@@ -81,9 +95,6 @@ const WhiteBoardPage = () => {
     }
     console.log("Saved successfully");
   };
-
-  // Optional: Auto-save every 5 seconds if changed
-  // (You can implement a proper debounce later)
 
   if (loading)
     return (
@@ -144,6 +155,7 @@ const WhiteBoardPage = () => {
         currentWidth={strokeWidth}
         isGuest={isGuest}
         boardId={id}
+        liveShapes={liveShapes}
       />
     </div>
   );
