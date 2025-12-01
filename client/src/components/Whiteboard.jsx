@@ -1,6 +1,7 @@
 import React, { useState, useRef,useEffect } from "react";
 import { Stage, Layer, Arrow, Text } from "react-konva"; // Import Arrow and Text
 import { v4 as uuidv4 } from "uuid";
+import socket from "../utils/socket.js"
 
 
 // Shape Components
@@ -18,6 +19,8 @@ const Whiteboard = ({
   setShapes,
   currentColor,
   currentWidth,
+  isGuest,
+  boardId,
 }) => {
   const [newShape, setNewShape] = useState(null);
   const isDrawing = useRef(false);
@@ -100,7 +103,18 @@ const Whiteboard = ({
     isDrawing.current = false;
 
     if (newShape) {
+      // A. Update My Screen
       setShapes((prev) => [...prev, newShape]);
+
+      // B. Update Everyone Else's Screen
+      // Only emit if I am logged in and on a real board
+      if (!isGuest && boardId) {
+          socket.emit("draw_stroke", {
+              boardId: boardId,
+              shape: newShape
+          });
+      }
+
       setNewShape(null);
     }
   };

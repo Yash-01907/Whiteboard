@@ -4,6 +4,7 @@ import { Toolbar } from "../components/Toolbar";
 import Whiteboard from "../components/Whiteboard";
 import { getBoardById, saveBoard } from "../api/whiteboard";
 import PropertiesPanel from "../components/PropertiesPanel";
+import socket from "../utils/socket";
 // import _ from "lodash"; // Optional: for debounce (npm i lodash)
 
 const WhiteBoardPage = () => {
@@ -43,6 +44,29 @@ const WhiteBoardPage = () => {
 
     fetchBoardData();
   }, [id, isGuest, navigate]);
+
+  useEffect(() => {
+    // Only connect if it's a real board (not demo)
+    if (!isGuest && id) {
+      socket.connect();
+      socket.emit("join_room", id); // Tell server "I am on Board 123"
+      console.log("Joined Room:", id);
+
+      // Listen for incoming shapes from other people
+      socket.on("receive_stroke", (incomingShape) => {
+        // Add their shape to my screen
+        setShapes((prev) => [...prev, incomingShape]);
+      });
+    }
+
+    // Cleanup: Disconnect when I leave the page
+    return () => {
+      if (socket.connected) {
+        socket.off("receive_stroke"); // Stop listening
+        socket.disconnect();
+      }
+    };
+  }, [id, isGuest]);
 
   // 2. Save Function
   const handleSave = async () => {
@@ -118,6 +142,8 @@ const WhiteBoardPage = () => {
         setShapes={setShapes}
         currentColor={strokeColor}
         currentWidth={strokeWidth}
+        isGuest={isGuest}
+        boardId={id}
       />
     </div>
   );
