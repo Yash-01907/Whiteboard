@@ -14,6 +14,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       .status(401)
       .json({ success: false, message: "Unauthorized request" });
   }
+  console.log(incomingRefreshToken);
 
   try {
     // 2. Verify the signature (Is this a valid key?)
@@ -24,6 +25,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
     // 3. Find the user inside the "Bank"
     const user = await User.findById(decoded?.id);
+    console.log(user)
 
     if (!user) {
       return res
