@@ -32,7 +32,9 @@ api.interceptors.response.use(
         
       } catch (refreshError) {
         console.error("Refresh failed. Session ended.");
-        window.location.href = "/login"; 
+        if(window.location.pathname !== "/login"){
+          window.location.href = "/login"; 
+        }
         return Promise.reject(refreshError);
       }
     }

@@ -31,7 +31,7 @@ const navigate = useNavigate();
         // If error (401), it just means we aren't logged in. That's fine.
      
         setUser(null);
-        navigate("/login");
+        // navigate("/login");
       } finally {
         setLoading(false); // We are done checking
       }

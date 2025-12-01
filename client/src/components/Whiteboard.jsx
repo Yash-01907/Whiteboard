@@ -1,6 +1,7 @@
 import React, { useState, useRef,useEffect } from "react";
 import { Stage, Layer, Arrow, Text } from "react-konva"; // Import Arrow and Text
 import { v4 as uuidv4 } from "uuid";
+import socket from "../utils/socket.js"
 
 
 // Shape Components
@@ -10,6 +11,7 @@ import LineComponent from "../shapes/LineComponent";
 import { updateStrategies } from "../utils/shapeLogic.js";
 import TextComponent from "../shapes/TextComponent.jsx";
 import ArrowComponent from "../shapes/ArrowComponent.jsx";
+import { throttle } from "../utils/throttle.js";
 
 
 const Whiteboard = ({
@@ -18,6 +20,9 @@ const Whiteboard = ({
   setShapes,
   currentColor,
   currentWidth,
+  isGuest,
+  boardId,
+  liveShapes,
 }) => {
   const [newShape, setNewShape] = useState(null);
   const isDrawing = useRef(false);
@@ -25,9 +30,15 @@ const Whiteboard = ({
 
   const [editingText, setEditingText] = useState(null);
   const textareaRef = useRef(null);
-  // --- 1. MOUSE DOWN (Start Drawing) ---
+
+  const emitLiveUpdate = useRef(
+    throttle((data) => {
+        socket.emit("drawing_move", data);
+    }, 50)
+  ).current;
+
+
   const handleMouseDown = (e) => {
-    // If we are in "Select" or "Eraser" mode, do not start drawing a new shape
     if (editingText) return;
     if (tool === "select" || tool === "eraser") return;
 
@@ -38,8 +49,6 @@ const Whiteboard = ({
     const pos = e.target.getStage().getPointerPosition();
     const id = uuidv4();
 
-    // Base properties shared by most shapes
-    // We use the 'currentColor' and 'currentWidth' props here
     setNewShape( {
       id,
       tool,
@@ -51,19 +60,17 @@ const Whiteboard = ({
       startY: pos.y,
     });
     
-    // Specific Init Logic for different tools
     if (tool === "text") {
       setNewShape(prev=>({
         ...prev,
-        text: "Double click to edit", // Placeholder text
+        text: "Double click to edit",
         fontSize: 20,
         fill: currentColor,
-        // Text uses 'fill' for color, not 'stroke'
       }));
     } else if (tool === "line") {
       setNewShape(prev=>({
         ...prev,
-        fill: currentColor, // Arrow head color
+        fill: currentColor,
       }));
     } else if(tool==="straightLine" || tool==="arrow"){
       setNewShape(prev=>({
@@ -86,11 +93,18 @@ const Whiteboard = ({
     
     if (tool !== "text" && updateStrategies[tool]) {
       const updatedAttr = updateStrategies[tool](
-        { x: newShape.startX, y: newShape.startY }, // Start
-        point, // Current
-        newShape?.points // Previous Points (for lines)
+        { x: newShape.startX, y: newShape.startY },
+        point,
+        newShape?.points
       );
       setNewShape((prev) => ({ ...prev, ...updatedAttr }));
+      const shapeToSend = { ...newShape, ...updatedAttr };
+      if (!isGuest && boardId) {
+          emitLiveUpdate({
+              boardId,
+              shape: shapeToSend
+          });
+      }
     }
   };
 
@@ -101,6 +115,14 @@ const Whiteboard = ({
 
     if (newShape) {
       setShapes((prev) => [...prev, newShape]);
+
+      if (!isGuest && boardId) {
+          socket.emit("draw_stroke", {
+              boardId: boardId,
+              shape: newShape
+          });
+      }
+
       setNewShape(null);
     }
   };
@@ -108,18 +130,15 @@ const Whiteboard = ({
   // --- 4. ERASER LOGIC ---
   const handleShapeClick = (shapeId) => {
     if (tool === "eraser") {
-      // Remove the clicked shape from the state
       setShapes((prev) => prev.filter((s) => s.id !== shapeId));
     }
   };
 
   const handleTextDblClick = (e, shapeId, currentText) => {
     const textNode = e.target;
-    // Get absolute position relative to the window
     const stageBox = textNode.getStage().container().getBoundingClientRect();
     const textPosition = textNode.getAbsolutePosition();
     
-    // Calculate position for the textarea
     const areaPosition = {
         x: stageBox.left + textPosition.x,
         y: stageBox.top + textPosition.y,
@@ -137,9 +156,7 @@ const Whiteboard = ({
     });
   };
 
-  // B. Save Edit
   const handleTextEditComplete = (e) => {
-    // Update the specific shape in the array
     setShapes(shapes.map(shape => {
         if (shape.id === editingText.id) {
             return { ...shape, text: editingText.text };
@@ -157,15 +174,12 @@ const Whiteboard = ({
 
   // --- RENDER HELPER ---
   // We use a function instead of a simple object map so we can inject
-  // common props (like onClick) to every shape easily.
   const renderShape = (shape) => {
     const key = shape.id
     const commonProps = {
       id: shape.id,
-      // Listen for clicks to handle Erasing
       onClick: () => handleShapeClick(shape.id),
       onTap: () => handleShapeClick(shape.id),
-      // Only allow dragging if the Select tool is active
       draggable: tool === "select",
        
     };
@@ -204,6 +218,7 @@ const Whiteboard = ({
       >
         <Layer>
           {shapes.map((shape) => renderShape(shape))}
+          {Object.values(liveShapes).map((shape) => renderShape(shape))}
           {newShape && renderShape(newShape)}
         </Layer>
       </Stage>

@@ -16,8 +16,6 @@ function Login() {
   const { login } = useAuth();
   const [error, setError] = useState(null);
   const from = location.state?.from?.pathname || "/dashboard";
-  console.log(location);
-  console.log(from);
   const onSubmit = async (data) => {
     try {
       // const userInfo = await fetch("http://localhost:8000/api/v1/users/login", {
