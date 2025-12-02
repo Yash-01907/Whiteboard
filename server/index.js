@@ -64,6 +64,11 @@ io.on("connection", (socket) => {
     const { boardId, shape } = data;
     socket.to(boardId).emit("drawing_move", shape);
   });
+  
+  socket.on("cursor_move",(data)=>{
+      const {boardId,userId,username,x,y}=data;
+      socket.to(boardId).emit("cursor_move",{userId,username,x,y})
+  })
 
   socket.on("disconnect", () => {
     console.log("❌ User Disconnected", socket.id);
