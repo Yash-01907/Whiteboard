@@ -1,8 +1,7 @@
-import React, { useState, useRef,useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Stage, Layer, Arrow, Text } from "react-konva"; // Import Arrow and Text
 import { v4 as uuidv4 } from "uuid";
-import socket from "../utils/socket.js"
-
+import socket from "../utils/socket.js";
 
 // Shape Components
 import RectComponent from "../shapes/RectComponent";
@@ -12,7 +11,7 @@ import { updateStrategies } from "../utils/shapeLogic.js";
 import TextComponent from "../shapes/TextComponent.jsx";
 import ArrowComponent from "../shapes/ArrowComponent.jsx";
 import { throttle } from "../utils/throttle.js";
-
+import UserCursor from "./UserCursor.jsx";
 
 const Whiteboard = ({
   tool,
@@ -23,20 +22,41 @@ const Whiteboard = ({
   isGuest,
   boardId,
   liveShapes,
+  user,
 }) => {
   const [newShape, setNewShape] = useState(null);
   const isDrawing = useRef(false);
   const stageRef = useRef(null);
+  const [cursors, setCursors] = useState({});
 
   const [editingText, setEditingText] = useState(null);
   const textareaRef = useRef(null);
 
   const emitLiveUpdate = useRef(
     throttle((data) => {
-        socket.emit("drawing_move", data);
+      socket.emit("drawing_move", data);
     }, 50)
   ).current;
 
+  const emitCursorMove = useRef(
+    throttle((data) => {
+      socket.emit("cursor_move", data);
+    }, 50)
+  ).current;
+
+  useEffect(() => {
+    if (!isGuest && boardId) {
+      socket.on("cursor_move", (data) => {
+        setCursors((prev) => ({
+          ...prev,
+          [data.userId]: data, // Update position for this specific user
+        }));
+      });
+    }
+    return () => {
+      socket.off("cursor_move");
+    };
+  }, [isGuest, boardId]);
 
   const handleMouseDown = (e) => {
     if (editingText) return;
@@ -49,7 +69,7 @@ const Whiteboard = ({
     const pos = e.target.getStage().getPointerPosition();
     const id = uuidv4();
 
-    setNewShape( {
+    setNewShape({
       id,
       tool,
       x: pos.x,
@@ -59,27 +79,27 @@ const Whiteboard = ({
       startX: pos.x,
       startY: pos.y,
     });
-    
+
     if (tool === "text") {
-      setNewShape(prev=>({
+      setNewShape((prev) => ({
         ...prev,
         text: "Double click to edit",
         fontSize: 20,
         fill: currentColor,
       }));
     } else if (tool === "line") {
-      setNewShape(prev=>({
+      setNewShape((prev) => ({
         ...prev,
         fill: currentColor,
       }));
-    } else if(tool==="straightLine" || tool==="arrow"){
-      setNewShape(prev=>({
+    } else if (tool === "straightLine" || tool === "arrow") {
+      setNewShape((prev) => ({
         ...prev,
-        points: [pos.x, pos.y,pos.x,pos.y],
+        points: [pos.x, pos.y, pos.x, pos.y],
         fill: currentColor,
       }));
     }
-    console.log(newShape)
+    console.log(newShape);
   };
 
   // --- 2. MOUSE MOVE (Preview Drawing) ---
@@ -90,7 +110,6 @@ const Whiteboard = ({
     const stage = e.target.getStage();
     const point = stage.getPointerPosition();
 
-    
     if (tool !== "text" && updateStrategies[tool]) {
       const updatedAttr = updateStrategies[tool](
         { x: newShape.startX, y: newShape.startY },
@@ -100,10 +119,20 @@ const Whiteboard = ({
       setNewShape((prev) => ({ ...prev, ...updatedAttr }));
       const shapeToSend = { ...newShape, ...updatedAttr };
       if (!isGuest && boardId) {
-          emitLiveUpdate({
-              boardId,
-              shape: shapeToSend
-          });
+        emitLiveUpdate({
+          boardId,
+          shape: shapeToSend,
+        });
+      }
+
+      if (!isGuest && boardId && user) {
+        emitCursorMove({
+          boardId,
+          userId: user._id, // Or user.id
+          username: user.username,
+          x: point.x,
+          y: point.y,
+        });
       }
     }
   };
@@ -117,10 +146,10 @@ const Whiteboard = ({
       setShapes((prev) => [...prev, newShape]);
 
       if (!isGuest && boardId) {
-          socket.emit("draw_stroke", {
-              boardId: boardId,
-              shape: newShape
-          });
+        socket.emit("draw_stroke", {
+          boardId: boardId,
+          shape: newShape,
+        });
       }
 
       setNewShape(null);
@@ -138,10 +167,10 @@ const Whiteboard = ({
     const textNode = e.target;
     const stageBox = textNode.getStage().container().getBoundingClientRect();
     const textPosition = textNode.getAbsolutePosition();
-    
+
     const areaPosition = {
-        x: stageBox.left + textPosition.x,
-        y: stageBox.top + textPosition.y,
+      x: stageBox.left + textPosition.x,
+      y: stageBox.top + textPosition.y,
     };
 
     setEditingText({
@@ -152,51 +181,62 @@ const Whiteboard = ({
       color: textNode.fill(),
       fontSize: textNode.fontSize(),
       width: textNode.width(),
-      height: textNode.height()
+      height: textNode.height(),
     });
   };
 
   const handleTextEditComplete = (e) => {
-    setShapes(shapes.map(shape => {
+    setShapes(
+      shapes.map((shape) => {
         if (shape.id === editingText.id) {
-            return { ...shape, text: editingText.text };
+          return { ...shape, text: editingText.text };
         }
         return shape;
-    }));
+      })
+    );
     setEditingText(null);
   };
 
   useEffect(() => {
     if (editingText && textareaRef.current) {
-        textareaRef.current.focus();
+      textareaRef.current.focus();
     }
   }, [editingText]);
 
   // --- RENDER HELPER ---
   // We use a function instead of a simple object map so we can inject
   const renderShape = (shape) => {
-    const key = shape.id
+    const key = shape.id;
     const commonProps = {
       id: shape.id,
       onClick: () => handleShapeClick(shape.id),
       onTap: () => handleShapeClick(shape.id),
       draggable: tool === "select",
-       
     };
 
     switch (shape.tool) {
       case "rect":
-        return <RectComponent {...shape} {...commonProps} key={key}/>;
+        return <RectComponent {...shape} {...commonProps} key={key} />;
       case "ellipse":
-        return <EllipseComponent {...shape} {...commonProps} key={key}/>;
+        return <EllipseComponent {...shape} {...commonProps} key={key} />;
       case "line":
-        return <LineComponent {...shape} {...commonProps} key={key}/>;
+        return <LineComponent {...shape} {...commonProps} key={key} />;
       case "arrow":
-       return <ArrowComponent commonProps={commonProps} shape={shape} key={key}/>;
+        return (
+          <ArrowComponent commonProps={commonProps} shape={shape} key={key} />
+        );
       case "text":
-        return <TextComponent commonProps={commonProps} shape={shape} key={key} handleTextDblClick={handleTextDblClick} editingText={editingText}/>;
+        return (
+          <TextComponent
+            commonProps={commonProps}
+            shape={shape}
+            key={key}
+            handleTextDblClick={handleTextDblClick}
+            editingText={editingText}
+          />
+        );
       case "straightLine":
-        return <LineComponent {...shape} {...commonProps} key={key}/>;
+        return <LineComponent {...shape} {...commonProps} key={key} />;
       default:
         return null;
     }
@@ -213,44 +253,49 @@ const Whiteboard = ({
         onTouchStart={handleMouseDown}
         onTouchMove={handleMouseMove}
         onTouchEnd={handleMouseUp}
-        className="bg-transparent" 
+        className="bg-transparent"
         ref={stageRef}
       >
         <Layer>
           {shapes.map((shape) => renderShape(shape))}
           {Object.values(liveShapes).map((shape) => renderShape(shape))}
           {newShape && renderShape(newShape)}
+          {Object.values(cursors).map((cursor) => (
+             <UserCursor key={cursor.userId} cursor={cursor} />
+          ))}
         </Layer>
       </Stage>
       {editingText && (
         <textarea
-            ref={textareaRef}
-            value={editingText.text}
-            onChange={(e) => setEditingText({...editingText, text: e.target.value})}
-            onBlur={handleTextEditComplete}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                    handleTextEditComplete();
-                }
-            }}
-            style={{
-                position: 'fixed', // Use fixed to match window coordinates
-                top: editingText.y,
-                left: editingText.x,
-                fontSize: `${editingText.fontSize}px`,
-                lineHeight: `${editingText.fontSize}px`,
-                color: editingText.color,
-                border: 'none',
-                padding: '0px',
-                margin: '0px',
-                background: 'transparent',
-                outline: '1px dashed #3b82f6', // Helper outline
-                resize: 'none',
-                overflow: 'hidden',
-                whiteSpace: 'pre', // Keep formatting
-                minWidth: '100px', // Fallback width
-                zIndex: 9999, // Ensure it's on top
-            }}
+          ref={textareaRef}
+          value={editingText.text}
+          onChange={(e) =>
+            setEditingText({ ...editingText, text: e.target.value })
+          }
+          onBlur={handleTextEditComplete}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              handleTextEditComplete();
+            }
+          }}
+          style={{
+            position: "fixed", // Use fixed to match window coordinates
+            top: editingText.y,
+            left: editingText.x,
+            fontSize: `${editingText.fontSize}px`,
+            lineHeight: `${editingText.fontSize}px`,
+            color: editingText.color,
+            border: "none",
+            padding: "0px",
+            margin: "0px",
+            background: "transparent",
+            outline: "1px dashed #3b82f6", // Helper outline
+            resize: "none",
+            overflow: "hidden",
+            whiteSpace: "pre", // Keep formatting
+            minWidth: "100px", // Fallback width
+            zIndex: 9999, // Ensure it's on top
+          }}
         />
       )}
     </div>

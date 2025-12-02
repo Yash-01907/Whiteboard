@@ -5,12 +5,14 @@ import Whiteboard from "../components/Whiteboard";
 import { getBoardById, saveBoard } from "../api/whiteboard";
 import PropertiesPanel from "../components/PropertiesPanel";
 import socket from "../utils/socket";
+import { useAuth } from "../context/AuthContext";
 // import _ from "lodash"; // Optional: for debounce (npm i lodash)
 
 const WhiteBoardPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isGuest = !id || id === "demo";
+  const { user } = useAuth();
 
   // LIFTED STATE: The Page owns the data, not the component
   const [shapes, setShapes] = useState([]);
@@ -156,6 +158,7 @@ const WhiteBoardPage = () => {
         isGuest={isGuest}
         boardId={id}
         liveShapes={liveShapes}
+        user={user}
       />
     </div>
   );
