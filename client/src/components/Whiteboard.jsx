@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { Stage, Layer, Arrow, Text } from "react-konva"; // Import Arrow and Text
 import { v4 as uuidv4 } from "uuid";
 import socket from "../utils/socket.js";
@@ -13,7 +13,7 @@ import ArrowComponent from "../shapes/ArrowComponent.jsx";
 import { throttle } from "../utils/throttle.js";
 import UserCursor from "./UserCursor.jsx";
 
-const Whiteboard = ({
+const Whiteboard = forwardRef (({
   tool,
   shapes,
   setShapes,
@@ -23,7 +23,7 @@ const Whiteboard = ({
   boardId,
   liveShapes,
   user,
-}) => {
+},ref) => {
   const [newShape, setNewShape] = useState(null);
   const isDrawing = useRef(false);
   const stageRef = useRef(null);
@@ -254,7 +254,7 @@ const Whiteboard = ({
         onTouchMove={handleMouseMove}
         onTouchEnd={handleMouseUp}
         className="bg-transparent"
-        ref={stageRef}
+        ref={ref}
       >
         <Layer>
           {shapes.map((shape) => renderShape(shape))}
@@ -300,6 +300,6 @@ const Whiteboard = ({
       )}
     </div>
   );
-};
+});
 
 export default Whiteboard;
