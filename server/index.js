@@ -17,7 +17,7 @@ try {
 }
 
 const app = express();
-
+app.set("trust proxy",1)
 const httpServer = createServer(app);
 
 const allowedOrigins = [process.env.FRONTEND_URL, "http://localhost:5173"];
