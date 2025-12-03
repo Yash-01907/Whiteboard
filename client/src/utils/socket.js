@@ -1,9 +1,9 @@
 import io from "socket.io-client";
+const URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:8000";
 
-// Ensure this matches your backend URL
-const socket = io("http://localhost:8000", {
-  withCredentials: true, // Passes cookies so backend knows who we are
-  autoConnect: false,    // We connect manually only when entering a board
+const socket = io(URL, {
+  withCredentials: true,
+  autoConnect: false,
 });
 
 export default socket;

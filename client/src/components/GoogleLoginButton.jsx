@@ -1,43 +1,36 @@
 import React from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router"; // Standard import
+import { api } from "../api/axios"; // <--- Import your configured Axios instance
 
 const GoogleLoginButton = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+
   const loginToApp = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      console.log(tokenResponse);
-      // tokenResponse contains "access_token", NOT "credential" (ID Token)
-
-      // Send the access token to backend
-
       try {
-        const userInfo = await fetch(
-          "http://localhost:8000/api/v1/auth/google",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token: tokenResponse.access_token }),
-            credentials: "include",
-          }
-        );
-        const data = await userInfo.json();
-        login(data.user);
-        navigate("/dashboard");
+        const response = await api.post("/auth/google", {
+            token: tokenResponse.access_token 
+        });
+        const data = response.data;
+
+        if (data.success) {
+          login(data.user);
+          navigate("/dashboard");
+        }
       } catch (error) {
-        console.error(error);
+        console.error("Google Login Error:", error);
       }
     },
     onError: (error) => console.log("Login Failed:", error),
   });
 
   return (
-    // You can style this button however you want!
     <button
       onClick={() => loginToApp()}
-      className="bg-[#1A1A1A] w-full rounded-xl py-3 px-6 text-white font-semibold flex items-center justify-center cursor-pointer gap-2"
+      className="bg-[#1A1A1A] w-full rounded-xl py-3 px-6 text-white font-semibold flex items-center justify-center cursor-pointer gap-2 hover:bg-black transition-colors shadow-lg active:scale-95 duration-200"
     >
       <img
         src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"

@@ -15,5 +15,6 @@ backend/.env
 .DS_Store
 *.log
 *.env
+*.env.production
 .vscode/
 .idea/
