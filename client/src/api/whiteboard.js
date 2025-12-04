@@ -20,3 +20,8 @@ export const saveBoard = async (id, elements) => {
   const response = await api.put(`/whiteboards/${id}`, { elements });
   return response.data;
 };
+
+export const updateBoard=async (id,updates)=>{
+  const response=await api.put(`/whiteboards/${id}`,updates)
+  return response.data;
+}
