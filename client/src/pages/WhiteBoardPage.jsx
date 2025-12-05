@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Toolbar } from "../components/Toolbar";
 import Whiteboard from "../components/Whiteboard";
-import { getBoardById, saveBoard } from "../api/whiteboard";
+import { getBoardById, saveBoard, updateBoard } from "../api/whiteboard";
 import PropertiesPanel from "../components/PropertiesPanel";
 import socket from "../utils/socket";
 import { useAuth } from "../context/AuthContext";
-import { Download } from "lucide-react";
+import { Download, Share2, ArrowLeft, Save } from "lucide-react";
 import Konva from "konva";
+import ShareModal from "../components/ShareModal";
 
 const WhiteBoardPage = () => {
   const { id } = useParams();
@@ -22,7 +23,13 @@ const WhiteBoardPage = () => {
   const [strokeWidth, setStrokeWidth] = useState(3);
   const [canvasColor, setCanvasColor] = useState("#ffffff");
   const [liveShapes, setLiveShapes] = useState({});
-  const stageRef=useRef(null);
+  const [boardData, setBoardData] = useState({
+    title: "Untitled",
+    owner: null,
+    collaborators: [],
+  });
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const stageRef = useRef(null);
 
   useEffect(() => {
     const fetchBoardData = async () => {
@@ -31,10 +38,16 @@ const WhiteBoardPage = () => {
           const localData = localStorage.getItem("guest_whiteboard");
           if (localData) {
             setShapes(JSON.parse(localData));
+            setBoardData({
+              title: "Guest Session",
+              owner: "guest",
+              collaborators: [],
+            });
           }
         } else {
           const response = await getBoardById(id);
           setShapes(response.whiteboard.elements); // Load shapes from DB
+          setBoardData(response.whiteboard);
         }
       } catch (error) {
         console.error("Failed to load board", error.toJSON());
@@ -47,6 +60,21 @@ const WhiteBoardPage = () => {
     fetchBoardData();
   }, [id, isGuest, navigate]);
 
+  const handleTitleChange = async (e) => {
+    const newTitle = e.target.value;
+    if (newTitle === boardData.title) return;
+
+    setBoardData((prev) => ({ ...prev, title: newTitle }));
+
+    if (!isGuest) {
+      try {
+        await updateBoard(id, { title: newTitle });
+      } catch (err) {
+        console.error("Rename failed");
+      }
+    }
+  };
+
   useEffect(() => {
     if (!isGuest && id) {
       socket.connect();
@@ -55,31 +83,30 @@ const WhiteBoardPage = () => {
 
       socket.on("receive_stroke", (finalShape) => {
         setShapes((prev) => [...prev, finalShape]);
-        
+
         setLiveShapes((prev) => {
-            const newLive = { ...prev };
-            delete newLive[finalShape.id];
-            return newLive;
+          const newLive = { ...prev };
+          delete newLive[finalShape.id];
+          return newLive;
         });
       });
 
       socket.on("drawing_move", (tempShape) => {
         setLiveShapes((prev) => ({
-            ...prev,
-            [tempShape.id]: tempShape 
+          ...prev,
+          [tempShape.id]: tempShape,
         }));
       });
     }
 
     return () => {
       if (socket.connected) {
-        socket.off("receive_stroke"); 
-        socket.off("drawing_move"); 
+        socket.off("receive_stroke");
+        socket.off("drawing_move");
         socket.disconnect();
       }
     };
   }, [id, isGuest]);
-
 
   const handleSave = async () => {
     if (isGuest) {
@@ -94,34 +121,34 @@ const WhiteBoardPage = () => {
     console.log("Saved successfully");
   };
 
-const handleDownload = () => {
+  const handleDownload = () => {
     if (!stageRef.current) return;
-    
+
     const stage = stageRef.current;
-    
+
     const background = new Konva.Rect({
-        x: 0,
-        y: 0,
-        width: stage.width(),
-        height: stage.height(),
-        fill: canvasColor,
-        listening: false,
+      x: 0,
+      y: 0,
+      width: stage.width(),
+      height: stage.height(),
+      fill: canvasColor,
+      listening: false,
     });
 
     const layer = stage.getLayers()[0];
     layer.add(background);
-    background.moveToBottom(); 
+    background.moveToBottom();
 
     layer.draw();
 
     const uri = stage.toDataURL({
       mimeType: "image/png",
       quality: 1,
-      pixelRatio: 2, 
+      pixelRatio: 2,
     });
 
     background.destroy();
-    layer.draw(); 
+    layer.draw();
 
     const link = document.createElement("a");
     link.download = `whiteboard-${new Date().toISOString().slice(0, 10)}.png`;
@@ -144,35 +171,58 @@ const handleDownload = () => {
       style={{ backgroundColor: canvasColor }}
     >
       <div className="absolute top-4 right-4 z-20 flex gap-2">
-        {isGuest && (
-          <span className="bg-yellow-100 text-yellow-800 px-3 py-2 rounded border border-yellow-300">
-            Guest Mode (Local Only)
-          </span>
-        )}
+       {/* Left: Back & Title */}
+        <div className="flex items-center gap-3 bg-white/90 backdrop-blur shadow-sm p-2 rounded-xl pointer-events-auto border border-gray-200">
+           <button onClick={() => navigate(isGuest ? "/login" : "/dashboard")} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600">
+             <ArrowLeft size={20} />
+           </button>
+           
+           {/* Editable Title Input */}
+           <div className="h-8 border-l border-gray-200 pl-3 flex items-center">
+             <input 
+               type="text"
+               className="bg-transparent font-bold text-gray-800 focus:outline-none focus:bg-gray-50 px-1 rounded truncate w-32 sm:w-64"
+               defaultValue={boardData.title}
+               onBlur={handleTitleChange} // Save when clicking away
+               disabled={isGuest} // Guests can't rename
+             />
+           </div>
+        </div>
 
-        <button
-          onClick={handleSave}
-          className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
-        >
-          {isGuest ? "Save Locally" : "Save Board"}
-        </button>
+        {/* Right: Actions */}
+        <div className="flex gap-2 pointer-events-auto">
+           {/* Share Button (Only for Users) */}
+           {!isGuest && (
+             <button 
+               onClick={() => setIsShareOpen(true)}
+               className="bg-white text-gray-700 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50 border border-gray-200 flex items-center gap-2 font-medium"
+             >
+               <Share2 size={18} />
+               <span className="hidden sm:inline">Share</span>
+             </button>
+           )}
 
-        <button 
-            onClick={handleDownload}
-            className="bg-white text-gray-700 p-2 rounded shadow hover:bg-gray-50 border border-gray-200"
-            title="Download as Image"
-          >
-            <Download size={20} />
-          </button>
-
-        <button
-          onClick={() => navigate(isGuest ? "/login" : "/dashboard")}
-          className="bg-gray-600 text-white px-4 py-2 rounded shadow hover:bg-gray-700"
-        >
-          Exit
-        </button>
+           <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2 font-medium">
+             <Save size={18} />
+             <span className="hidden sm:inline">Save</span>
+           </button>
+           
+           <button onClick={handleDownload} className="bg-white text-gray-700 p-2 rounded-lg shadow hover:bg-gray-50 border border-gray-200">
+             <Download size={20} />
+           </button>
+        </div>
       </div>
 
+      {/* --- MODALS --- */}
+      <ShareModal 
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        boardId={id}
+        collaborators={boardData.collaborators || []}
+        ownerId={typeof boardData.owner === 'object' ? boardData.owner._id : boardData.owner}
+        currentUserId={user?._id}
+        onUpdate={(updatedBoard) => setBoardData(updatedBoard)}
+      />
       <div className="absolute top-1/2 left-4 -translate-y-1/2 z-10">
         <Toolbar activeTool={tool} onToolChange={setTool} />
       </div>
@@ -188,7 +238,7 @@ const handleDownload = () => {
         />
       </div>
       <Whiteboard
-      ref={stageRef}
+        ref={stageRef}
         tool={tool}
         shapes={shapes}
         setShapes={setShapes}
