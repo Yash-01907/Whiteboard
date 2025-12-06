@@ -6,9 +6,10 @@ import { getBoardById, saveBoard, updateBoard } from "../api/whiteboard";
 import PropertiesPanel from "../components/PropertiesPanel";
 import socket from "../utils/socket";
 import { useAuth } from "../context/AuthContext";
-import { Download, Share2, ArrowLeft, Save } from "lucide-react";
+import { Download, Share2, ArrowLeft, Save, Redo2, Undo2 } from "lucide-react";
 import Konva from "konva";
 import ShareModal from "../components/ShareModal";
+import useHistory from "../utils/useHistory";
 
 const WhiteBoardPage = () => {
   const { id } = useParams();
@@ -31,6 +32,17 @@ const WhiteBoardPage = () => {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const stageRef = useRef(null);
 
+  const {
+    history,
+    step,
+    canUndo,
+    canRedo,
+    currentHistoryState,
+    addToHistory,
+    undo,
+    redo,
+  } = useHistory(shapes);
+
   useEffect(() => {
     const fetchBoardData = async () => {
       try {
@@ -46,7 +58,8 @@ const WhiteBoardPage = () => {
           }
         } else {
           const response = await getBoardById(id);
-          setShapes(response.whiteboard.elements); // Load shapes from DB
+          setShapes(response.whiteboard.elements);
+          addToHistory(response.whiteboard.elements);
           setBoardData(response.whiteboard);
         }
       } catch (error) {
@@ -59,6 +72,38 @@ const WhiteBoardPage = () => {
 
     fetchBoardData();
   }, [id, isGuest, navigate]);
+
+  const handleUndo = () => {
+    const previousShapes = undo();
+    if (previousShapes) {
+      setShapes(previousShapes);
+      //Add socket option
+    }
+  };
+
+  const handleRedo = () => {
+    const nextShapes = redo();
+    if (nextShapes) {
+      setShapes(nextShapes);
+      //Add socket option
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "z" && (e.metaKey || e.ctrlKey)) {
+        handleUndo();
+      }
+      if (e.key === "y" && (e.metaKey || e.ctrlKey)) {
+        handleRedo();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [undo, redo]);
 
   const handleTitleChange = async (e) => {
     const newTitle = e.target.value;
@@ -158,6 +203,22 @@ const WhiteBoardPage = () => {
     document.body.removeChild(link);
   };
 
+ // In WhiteBoardPage.jsx
+const onShapeAdd = (update) => {
+    // Check if it's a function (standard React state update)
+    if (typeof update === "function") {
+        setShapes((prev) => {
+            const newState = update(prev);
+            addToHistory(newState); // Snapshot the result
+            return newState;
+        });
+    } else {
+        // It's a direct array
+        setShapes(update);
+        addToHistory(update);
+    }
+};
+
   if (loading)
     return (
       <div className="h-screen flex items-center justify-center">
@@ -171,55 +232,68 @@ const WhiteBoardPage = () => {
       style={{ backgroundColor: canvasColor }}
     >
       <div className="absolute top-4 right-4 z-20 flex gap-2">
-       {/* Left: Back & Title */}
+        {/* Left: Back & Title */}
         <div className="flex items-center gap-3 bg-white/90 backdrop-blur shadow-sm p-2 rounded-xl pointer-events-auto border border-gray-200">
-           <button onClick={() => navigate(isGuest ? "/login" : "/dashboard")} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600">
-             <ArrowLeft size={20} />
-           </button>
-           
-           {/* Editable Title Input */}
-           <div className="h-8 border-l border-gray-200 pl-3 flex items-center">
-             <input 
-               type="text"
-               className="bg-transparent font-bold text-gray-800 focus:outline-none focus:bg-gray-50 px-1 rounded truncate w-32 sm:w-64"
-               defaultValue={boardData.title}
-               onBlur={handleTitleChange} // Save when clicking away
-               disabled={isGuest} // Guests can't rename
-             />
-           </div>
+          <button
+            onClick={() => navigate(isGuest ? "/login" : "/dashboard")}
+            className="p-2 hover:bg-gray-100 rounded-lg text-gray-600"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          
+          {/* Editable Title Input */}
+          <div className="h-8 border-l border-gray-200 pl-3 flex items-center">
+            <input
+              type="text"
+              className="bg-transparent font-bold text-gray-800 focus:outline-none focus:bg-gray-50 px-1 rounded truncate w-32 sm:w-64"
+              defaultValue={boardData.title}
+              onBlur={handleTitleChange} // Save when clicking away
+              disabled={isGuest} // Guests can't rename
+            />
+          </div>
         </div>
 
         {/* Right: Actions */}
         <div className="flex gap-2 pointer-events-auto">
-           {/* Share Button (Only for Users) */}
-           {!isGuest && (
-             <button 
-               onClick={() => setIsShareOpen(true)}
-               className="bg-white text-gray-700 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50 border border-gray-200 flex items-center gap-2 font-medium"
-             >
-               <Share2 size={18} />
-               <span className="hidden sm:inline">Share</span>
-             </button>
-           )}
+          {/* Share Button (Only for Users) */}
+          {!isGuest && (
+            <button
+              onClick={() => setIsShareOpen(true)}
+              className="bg-white text-gray-700 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50 border border-gray-200 flex items-center gap-2 font-medium"
+            >
+              <Share2 size={18} />
+              <span className="hidden sm:inline">Share</span>
+            </button>
+          )}
 
-           <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2 font-medium">
-             <Save size={18} />
-             <span className="hidden sm:inline">Save</span>
-           </button>
-           
-           <button onClick={handleDownload} className="bg-white text-gray-700 p-2 rounded-lg shadow hover:bg-gray-50 border border-gray-200">
-             <Download size={20} />
-           </button>
+          <button
+            onClick={handleSave}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2 font-medium"
+          >
+            <Save size={18} />
+            <span className="hidden sm:inline">Save</span>
+          </button>
+
+          <button
+            onClick={handleDownload}
+            className="bg-white text-gray-700 p-2 rounded-lg shadow hover:bg-gray-50 border border-gray-200"
+          >
+            <Download size={20} />
+          </button>
         </div>
       </div>
 
       {/* --- MODALS --- */}
-      <ShareModal 
+      <ShareModal
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
         boardId={id}
         collaborators={boardData.collaborators || []}
-        ownerId={typeof boardData.owner === 'object' ? boardData.owner._id : boardData.owner}
+        ownerId={
+          typeof boardData.owner === "object"
+            ? boardData.owner._id
+            : boardData.owner
+        }
         currentUserId={user?._id}
         onUpdate={(updatedBoard) => setBoardData(updatedBoard)}
       />
@@ -241,7 +315,7 @@ const WhiteBoardPage = () => {
         ref={stageRef}
         tool={tool}
         shapes={shapes}
-        setShapes={setShapes}
+        setShapes={onShapeAdd}
         currentColor={strokeColor}
         currentWidth={strokeWidth}
         isGuest={isGuest}

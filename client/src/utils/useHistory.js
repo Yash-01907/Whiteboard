@@ -37,3 +37,4 @@ const useHistory = (initialState) => {
         redo
     }
 }
+export default useHistory
