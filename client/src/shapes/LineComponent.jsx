@@ -1,17 +1,16 @@
 import React from "react";
 import { Line } from "react-konva";
 
-const LineComponent = ({ points, stroke = "black", strokeWidth = 2,draggable,onClick }) => {
+const LineComponent = (props) => {
   return (
     <Line
-      points={points} 
-      stroke={stroke}
-      strokeWidth={strokeWidth}
+      // Default styles for lines
       tension={0.2}
       lineCap="round"
       lineJoin="round"
-      draggable={draggable}
-      onClick={onClick}
+      
+      // Spread EVERYTHING else (points, stroke, strokeWidth, draggable, events, AND ID)
+      {...props} 
     />
   );
 };

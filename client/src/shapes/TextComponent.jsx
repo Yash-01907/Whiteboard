@@ -5,7 +5,9 @@ function TextComponent({
     shape,
     key,
     handleTextDblClick,
-    editingText
+    editingText,
+    onDragEnd,
+    onTransformEnd,
 }) {
   return (
     // <Text
@@ -30,6 +32,8 @@ function TextComponent({
             onDblTap={(e) => handleTextDblClick(e, shape.id, shape.text)}
             // Hide the text node while editing so it doesn't overlap
             visible={editingText?.id !== shape.id} 
+            onDragEnd={onDragEnd}
+            onTransformEnd={onTransformEnd}
           />
   );
 }
