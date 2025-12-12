@@ -291,7 +291,7 @@ const onShapeAdd = (update) => {
         collaborators={boardData.collaborators || []}
         ownerId={
           typeof boardData.owner === "object"
-            ? boardData.owner._id
+            ? boardData.owner?._id
             : boardData.owner
         }
         currentUserId={user?._id}

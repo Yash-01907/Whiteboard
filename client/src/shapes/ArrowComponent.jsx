@@ -4,7 +4,9 @@ import { Arrow } from 'react-konva'
 function ArrowComponent({
     commonProps,
     shape,
-    key
+    key,
+    onDragEnd,
+    onTransformEnd,
 }) {
    return (
           <Arrow
@@ -16,6 +18,8 @@ function ArrowComponent({
             fill={shape.fill}
             pointerLength={10}
             pointerWidth={10}
+            onDragEnd={onDragEnd}
+            onTransformEnd={onTransformEnd}
           />
         );
 }
