@@ -62,8 +62,8 @@ const Whiteboard = forwardRef (({
     if (editingText) return;
     if (tool === "select" || tool === "eraser") return;
 
-    const clickedOnEmpty = e.target === e.target.getStage();
-    if (!clickedOnEmpty) return;
+    // const clickedOnEmpty = e.target === e.target.getStage();
+    // if (!clickedOnEmpty) return;
 
     isDrawing.current = true;
     const pos = e.target.getStage().getPointerPosition();
