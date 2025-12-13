@@ -3,7 +3,6 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import "./index.css";
 import AuthLayout from "./components/AuthLayout";
 import LoginPage from "./pages/LoginPage";
-import Register from "./components/Register";
 import WhiteboardPage from "./pages/WhiteBoardPage.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import conf from "./utils/conf";
